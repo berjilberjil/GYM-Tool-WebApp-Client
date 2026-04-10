@@ -1,0 +1,367 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  CreditCard,
+  Banknote,
+  Smartphone,
+  Building2,
+  Clock,
+  CheckCircle2,
+  AlertTriangle,
+  Wallet,
+  TrendingUp,
+  AlertOctagon,
+  Receipt,
+} from "lucide-react";
+
+interface Payment {
+  id: string;
+  amount: string;
+  status: "paid" | "pending" | "overdue";
+  dueDate: string;
+  paidDate: string | null;
+  method: "cash" | "upi" | "card" | "bank_transfer" | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+interface Subscription {
+  id: string;
+  startDate: string;
+  endDate: string;
+  status: "active" | "expired" | "cancelled";
+  planName: string;
+  planAmount: string;
+  planDurationDays: number;
+}
+
+interface Summary {
+  totalPaid: number;
+  pendingAmount: number;
+  overdueCount: number;
+}
+
+interface PaymentsData {
+  payments: Payment[];
+  subscription: Subscription | null;
+  summary: Summary;
+}
+
+const METHOD_ICONS: Record<string, React.ReactNode> = {
+  cash: <Banknote className="w-4 h-4" />,
+  upi: <Smartphone className="w-4 h-4" />,
+  card: <CreditCard className="w-4 h-4" />,
+  bank_transfer: <Building2 className="w-4 h-4" />,
+};
+
+const METHOD_LABELS: Record<string, string> = {
+  cash: "Cash",
+  upi: "UPI",
+  card: "Card",
+  bank_transfer: "Bank Transfer",
+};
+
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatCurrency(amount: number | string): string {
+  const num = typeof amount === "string" ? parseFloat(amount) : amount;
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(num);
+}
+
+function StatusBadge({ status }: { status: "paid" | "pending" | "overdue" }) {
+  const config = {
+    paid: {
+      bg: "bg-emerald-500/15",
+      text: "text-emerald-400",
+      icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+      label: "Paid",
+    },
+    pending: {
+      bg: "bg-amber-500/15",
+      text: "text-amber-400",
+      icon: <Clock className="w-3.5 h-3.5" />,
+      label: "Pending",
+    },
+    overdue: {
+      bg: "bg-red-500/15",
+      text: "text-red-400",
+      icon: <AlertTriangle className="w-3.5 h-3.5" />,
+      label: "Overdue",
+    },
+  };
+
+  const c = config[status];
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${c.bg} ${c.text}`}
+    >
+      {c.icon}
+      {c.label}
+    </span>
+  );
+}
+
+function SubscriptionCard({
+  subscription,
+}: {
+  subscription: Subscription | null;
+}) {
+  if (!subscription) {
+    return (
+      <div className="glass rounded-2xl p-5 border border-white/[0.06] opacity-70 animate-fade-up">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-xl bg-white/[0.05] flex items-center justify-center">
+            <CreditCard className="w-5 h-5 text-[#6B6B80]" />
+          </div>
+          <div>
+            <p className="text-sm text-[#6B6B80]">Subscription</p>
+            <p className="text-base font-semibold text-[#6B6B80]">
+              No active plan
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const isActive = subscription.status === "active";
+  const isExpired = subscription.status === "expired";
+
+  const borderClass = isActive
+    ? "border-emerald-500/40 shadow-[0_0_24px_rgba(2,203,0,0.15)]"
+    : isExpired
+    ? "border-red-500/40"
+    : "border-white/[0.06]";
+
+  return (
+    <div
+      className={`relative overflow-hidden rounded-2xl p-5 border ${borderClass} animate-fade-up`}
+      style={{
+        background:
+          "linear-gradient(135deg, rgba(18,18,26,0.9) 0%, rgba(0,87,255,0.08) 100%)",
+      }}
+    >
+      <div className="absolute inset-0 animate-shimmer pointer-events-none" />
+      <div className="relative z-10">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-[#0057FF]/20 flex items-center justify-center">
+              <CreditCard className="w-5 h-5 text-[#0057FF]" />
+            </div>
+            <div>
+              <p className="text-xs text-[#6B6B80] uppercase tracking-wider">
+                Current Plan
+              </p>
+              <p className="text-lg font-bold text-white">
+                {subscription.planName}
+              </p>
+            </div>
+          </div>
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+              isActive
+                ? "bg-emerald-500/15 text-emerald-400"
+                : isExpired
+                ? "bg-red-500/15 text-red-400"
+                : "bg-amber-500/15 text-amber-400"
+            }`}
+          >
+            {subscription.status.charAt(0).toUpperCase() +
+              subscription.status.slice(1)}
+          </span>
+        </div>
+        <div className="flex items-end justify-between">
+          <div className="space-y-1">
+            <p className="text-xs text-[#6B6B80]">
+              {formatDate(subscription.startDate)} -{" "}
+              {formatDate(subscription.endDate)}
+            </p>
+            <p className="text-xs text-[#6B6B80]">
+              {subscription.planDurationDays} day plan
+            </p>
+          </div>
+          <p className="text-2xl font-bold text-gradient-blue">
+            {formatCurrency(subscription.planAmount)}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function PaymentsPage() {
+  const [data, setData] = useState<PaymentsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchPayments() {
+      try {
+        const res = await fetch("/api/me/payments");
+        if (!res.ok) {
+          throw new Error("Failed to fetch payments");
+        }
+        const json = await res.json();
+        setData(json);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPayments();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 border-2 border-[#0057FF] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-[60vh] px-6">
+        <div className="text-center">
+          <AlertOctagon className="w-12 h-12 text-red-400 mx-auto mb-3" />
+          <p className="text-red-400 text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const { payments, subscription, summary } = data;
+
+  return (
+    <div className="w-full max-w-[480px] mx-auto px-4 py-6 pb-28 space-y-6">
+      {/* Header */}
+      <div className="animate-fade-up">
+        <h1 className="text-2xl font-bold text-white">Payments</h1>
+        <p className="text-sm text-[#6B6B80] mt-1">
+          Your subscription and payment history
+        </p>
+      </div>
+
+      {/* Subscription Card */}
+      <SubscriptionCard subscription={subscription} />
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-3 gap-3 animate-fade-up delay-2">
+        <div className="glass rounded-2xl p-4 text-center">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center mx-auto mb-2">
+            <Wallet className="w-4 h-4 text-emerald-400" />
+          </div>
+          <p className="text-base font-bold text-white">
+            {formatCurrency(summary.totalPaid)}
+          </p>
+          <p className="text-[10px] text-[#6B6B80] mt-0.5">Total Paid</p>
+        </div>
+        <div className="glass rounded-2xl p-4 text-center">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center mx-auto mb-2">
+            <TrendingUp className="w-4 h-4 text-amber-400" />
+          </div>
+          <p className="text-base font-bold text-white">
+            {formatCurrency(summary.pendingAmount)}
+          </p>
+          <p className="text-[10px] text-[#6B6B80] mt-0.5">Pending</p>
+        </div>
+        <div className="glass rounded-2xl p-4 text-center">
+          <div className="w-9 h-9 rounded-xl bg-red-500/15 flex items-center justify-center mx-auto mb-2">
+            <AlertTriangle className="w-4 h-4 text-red-400" />
+          </div>
+          <p className="text-base font-bold text-white">
+            {summary.overdueCount}
+          </p>
+          <p className="text-[10px] text-[#6B6B80] mt-0.5">Overdue</p>
+        </div>
+      </div>
+
+      {/* Payment History */}
+      <div className="animate-fade-up delay-3">
+        <h2 className="text-base font-semibold text-white mb-3 flex items-center gap-2">
+          <Receipt className="w-4 h-4 text-[#6B6B80]" />
+          Payment History
+        </h2>
+
+        {payments.length === 0 ? (
+          <div className="glass rounded-2xl p-10 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-white/[0.03] flex items-center justify-center mx-auto mb-4">
+              <Receipt className="w-8 h-8 text-[#6B6B80]" />
+            </div>
+            <p className="text-[#6B6B80] text-sm font-medium">
+              No payments yet
+            </p>
+            <p className="text-[#6B6B80]/60 text-xs mt-1">
+              Your payment history will appear here
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {payments.map((p, i) => (
+              <div
+                key={p.id}
+                className="glass rounded-2xl p-4 card-hover animate-fade-up"
+                style={{ animationDelay: `${0.05 * (i + 1)}s` }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                        p.status === "paid"
+                          ? "bg-emerald-500/15 text-emerald-400"
+                          : p.status === "pending"
+                          ? "bg-amber-500/15 text-amber-400"
+                          : "bg-red-500/15 text-red-400"
+                      }`}
+                    >
+                      {p.method ? (
+                        METHOD_ICONS[p.method]
+                      ) : (
+                        <CreditCard className="w-4 h-4" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-white truncate">
+                        {p.method
+                          ? METHOD_LABELS[p.method]
+                          : "Payment"}
+                      </p>
+                      <p className="text-xs text-[#6B6B80]">
+                        {p.paidDate
+                          ? formatDate(p.paidDate)
+                          : `Due ${formatDate(p.dueDate)}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <p className="text-base font-bold text-white">
+                      {formatCurrency(p.amount)}
+                    </p>
+                    <StatusBadge status={p.status} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
