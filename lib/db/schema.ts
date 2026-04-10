@@ -56,6 +56,8 @@ export const goalStatusEnum = pgEnum("goal_status", [
   "abandoned",
 ]);
 
+export const chatRoomTypeEnum = pgEnum("chat_room_type", ["direct", "group"]);
+
 // ============================================
 // BETTER AUTH CORE TABLES
 // ============================================
@@ -223,6 +225,78 @@ export const goal = pgTable("goal", {
   status: goalStatusEnum("status").notNull().default("active"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ============================================
+// CHAT / PRESENCE / EMAIL TRACKING
+// ============================================
+
+export const chatRoom = pgTable("chat_room", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orgId: uuid("org_id")
+    .notNull()
+    .references(() => organization.id, { onDelete: "cascade" }),
+  branchId: uuid("branch_id").references(() => branch.id, {
+    onDelete: "cascade",
+  }),
+  type: chatRoomTypeEnum("type").notNull(),
+  name: varchar("name", { length: 120 }),
+  createdBy: text("created_by")
+    .notNull()
+    .references(() => user.id),
+  lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const chatParticipant = pgTable("chat_participant", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  roomId: uuid("room_id")
+    .notNull()
+    .references(() => chatRoom.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  joinedAt: timestamp("joined_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  lastReadAt: timestamp("last_read_at", { withTimezone: true }),
+});
+
+export const chatMessage = pgTable("chat_message", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  roomId: uuid("room_id")
+    .notNull()
+    .references(() => chatRoom.id, { onDelete: "cascade" }),
+  senderId: text("sender_id")
+    .notNull()
+    .references(() => user.id),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const userPresence = pgTable("user_presence", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  status: varchar("status", { length: 20 }).default("offline").notNull(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const emailEvent = pgTable("email_event", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+  emailId: varchar("email_id", { length: 100 }),
+  toEmail: varchar("to_email", { length: 255 }).notNull(),
+  subject: varchar("subject", { length: 255 }),
+  sentAt: timestamp("sent_at", { withTimezone: true }).defaultNow().notNull(),
+  openedAt: timestamp("opened_at", { withTimezone: true }),
+  clickedAt: timestamp("clicked_at", { withTimezone: true }),
 });
 
 // ============================================

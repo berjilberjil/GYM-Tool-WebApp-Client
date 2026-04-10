@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PartApp — Your Fitness Journey",
+  title: "LuxiFit — Your Fitness Journey",
   description: "Track your progress, goals, and gym membership",
 };
 

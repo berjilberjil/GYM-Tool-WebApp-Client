@@ -153,12 +153,12 @@ export default function ProgressPage() {
 
   const trendColor =
     weightDiff === null
-      ? "text-muted-foreground"
+      ? "text-gray-500"
       : weightDiff > 0
         ? "text-[#F97C00]"
         : weightDiff < 0
           ? "text-[#02CB00]"
-          : "text-muted-foreground";
+          : "text-gray-500";
 
   // ── Mini chart helpers ─────────────────────────────────
   const weights = last5
@@ -183,14 +183,14 @@ export default function ProgressPage() {
           </div>
         ) : latest?.weightKg ? (
           <>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
+            <p className="text-xs uppercase tracking-widest text-gray-500 mb-1">
               Current Weight
             </p>
             <div className="flex items-end gap-3">
               <span className="text-5xl font-bold text-gradient-blue leading-none">
                 {Number(latest.weightKg).toFixed(1)}
               </span>
-              <span className="text-lg text-muted-foreground mb-1">kg</span>
+              <span className="text-lg text-gray-500 mb-1">kg</span>
               <div className={`flex items-center gap-1 mb-1 ml-auto ${trendColor}`}>
                 <TrendIcon className="size-5" />
                 {weightDiff !== null && (
@@ -204,8 +204,8 @@ export default function ProgressPage() {
             {latest.bodyFatPct && (
               <div className="flex items-center gap-2 mt-3">
                 <Activity className="size-4 text-[#00E5FF]" />
-                <span className="text-sm text-muted-foreground">Body Fat</span>
-                <span className="text-sm font-semibold text-foreground ml-auto">
+                <span className="text-sm text-gray-500">Body Fat</span>
+                <span className="text-sm font-semibold text-gray-900 ml-auto">
                   {Number(latest.bodyFatPct).toFixed(1)}%
                 </span>
               </div>
@@ -213,8 +213,8 @@ export default function ProgressPage() {
           </>
         ) : (
           <div className="text-center py-4">
-            <Scale className="size-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground text-sm">No data yet</p>
+            <Scale className="size-10 text-gray-500 mx-auto mb-3" />
+            <p className="text-gray-500 text-sm">No data yet</p>
           </div>
         )}
       </div>
@@ -225,7 +225,7 @@ export default function ProgressPage() {
           className="glass rounded-2xl p-5 mb-6 animate-fade-up delay-1"
           style={{ animationFillMode: "both", opacity: 0 }}
         >
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-4">
+          <p className="text-xs uppercase tracking-widest text-gray-500 mb-4">
             Weight Trend
           </p>
           <div className="flex items-end gap-2 h-24">
@@ -235,7 +235,7 @@ export default function ProgressPage() {
               return (
                 <div key={entry.id} className="flex-1 flex flex-col items-center gap-1">
                   {w !== null && (
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-[10px] text-gray-500">
                       {w.toFixed(0)}
                     </span>
                   )}
@@ -246,12 +246,12 @@ export default function ProgressPage() {
                         height: `${Math.max(pct, 8)}%`,
                         background:
                           i === last5.length - 1
-                            ? "linear-gradient(to top, #0057FF, #00E5FF)"
-                            : "rgba(0, 87, 255, 0.3)",
+                            ? "linear-gradient(to top, #0057FF, #3B82F6)"
+                            : "rgba(0, 87, 255, 0.25)",
                       }}
                     />
                   </div>
-                  <span className="text-[9px] text-muted-foreground">
+                  <span className="text-[9px] text-gray-500">
                     {new Date(entry.recordedAt).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
@@ -270,10 +270,10 @@ export default function ProgressPage() {
         style={{ animationFillMode: "both", opacity: 0 }}
       >
         <Calendar className="size-4 text-[#0057FF]" />
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+        <h2 className="text-sm font-semibold uppercase tracking-widest text-gray-500">
           Timeline
         </h2>
-        <span className="text-xs text-muted-foreground ml-auto">
+        <span className="text-xs text-gray-500 ml-auto">
           {entries.length} {entries.length === 1 ? "entry" : "entries"}
         </span>
       </div>
@@ -295,7 +295,7 @@ export default function ProgressPage() {
         >
           <Dumbbell className="size-12 text-[#0057FF] mx-auto mb-4 animate-float" />
           <h3 className="text-lg font-semibold mb-2">Start Your Journey</h3>
-          <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+          <p className="text-sm text-gray-500 max-w-xs mx-auto">
             Every rep counts. Log your first progress entry and watch your
             transformation unfold.
           </p>
@@ -336,37 +336,37 @@ export default function ProgressPage() {
                       <Scale className="size-5 text-[#0057FF]" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-foreground">
+                      <p className="text-sm font-medium text-gray-900">
                         {fmtDate(entry.recordedAt)}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-gray-500">
                         {fmtRelative(entry.recordedAt)}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     {entry.weightKg && (
-                      <span className="text-lg font-bold text-foreground">
+                      <span className="text-lg font-bold text-gray-900">
                         {Number(entry.weightKg).toFixed(1)}
-                        <span className="text-xs text-muted-foreground ml-0.5">
+                        <span className="text-xs text-gray-500 ml-0.5">
                           kg
                         </span>
                       </span>
                     )}
                     {isExpanded ? (
-                      <ChevronUp className="size-4 text-muted-foreground" />
+                      <ChevronUp className="size-4 text-gray-500" />
                     ) : (
-                      <ChevronDown className="size-4 text-muted-foreground" />
+                      <ChevronDown className="size-4 text-gray-500" />
                     )}
                   </div>
                 </div>
 
                 {/* Expanded content */}
                 {isExpanded && (
-                  <div className="mt-4 pt-4 border-t border-white/[0.06] animate-fade-in space-y-3">
+                  <div className="mt-4 pt-4 border-t border-gray-200 animate-fade-in space-y-3">
                     {entry.bodyFatPct && (
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground flex items-center gap-2">
+                        <span className="text-sm text-gray-500 flex items-center gap-2">
                           <Activity className="size-3.5 text-[#00E5FF]" />
                           Body Fat
                         </span>
@@ -380,7 +380,7 @@ export default function ProgressPage() {
                         key={m.label}
                         className="flex items-center justify-between"
                       >
-                        <span className="text-sm text-muted-foreground flex items-center gap-2">
+                        <span className="text-sm text-gray-500 flex items-center gap-2">
                           <Ruler className="size-3.5 text-[#0057FF]" />
                           {m.label}
                         </span>
@@ -390,8 +390,8 @@ export default function ProgressPage() {
                       </div>
                     ))}
                     {entry.notes && (
-                      <div className="pt-2 border-t border-white/[0.06]">
-                        <p className="text-xs text-muted-foreground italic">
+                      <div className="pt-2 border-t border-gray-200">
+                        <p className="text-xs text-gray-500 italic">
                           {entry.notes}
                         </p>
                       </div>
@@ -399,7 +399,7 @@ export default function ProgressPage() {
                     {!entry.bodyFatPct &&
                       measurements.length === 0 &&
                       !entry.notes && (
-                        <p className="text-xs text-muted-foreground italic">
+                        <p className="text-xs text-gray-500 italic">
                           No additional measurements recorded.
                         </p>
                       )}
@@ -437,7 +437,7 @@ export default function ProgressPage() {
             {/* Weight + Body Fat row */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">
+                <Label className="text-xs text-gray-500">
                   Weight (kg)
                 </Label>
                 <Input
@@ -452,7 +452,7 @@ export default function ProgressPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">
+                <Label className="text-xs text-gray-500">
                   Body Fat %
                 </Label>
                 <Input
@@ -470,7 +470,7 @@ export default function ProgressPage() {
 
             {/* Measurements */}
             <div>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+              <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">
                 Measurements (cm)
               </p>
               <div className="grid grid-cols-2 gap-3">
@@ -484,7 +484,7 @@ export default function ProgressPage() {
                   ] as const
                 ).map(([key, label]) => (
                   <div key={key} className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">
+                    <Label className="text-xs text-gray-500">
                       {label}
                     </Label>
                     <Input
@@ -504,7 +504,7 @@ export default function ProgressPage() {
 
             {/* Notes */}
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Notes</Label>
+              <Label className="text-xs text-gray-500">Notes</Label>
               <Textarea
                 placeholder="How are you feeling?"
                 className="min-h-[80px]"

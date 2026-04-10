@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is the **Client-facing mobile-first web application** for GYM Tool WebApp (PartApp). Gym members use this app to track their fitness progress, view goals, check payments, and manage their profile.
+This is the **Client-facing mobile-first web application** for GYM Tool WebApp (LuxiFit). Gym members use this app to track their fitness progress, view goals, check payments, and manage their profile.
 
 **Live URL:** https://ymg-client.vercel.app
 **Admin App:** https://ymg-livid.vercel.app (separate project)
@@ -158,7 +158,7 @@ ymg-client/
 
 ```
 ┌──────────────────────────────────────────┐
-│  PartApp                        [Avatar] │  <- Top header
+│  LuxiFit                        [Avatar] │  <- Top header
 ├──────────────────────────────────────────┤
 │                                          │
 │           Page Content                   │

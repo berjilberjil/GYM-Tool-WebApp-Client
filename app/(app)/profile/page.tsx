@@ -77,12 +77,12 @@ function InfoCard({
       className="glass rounded-2xl p-4 flex items-center gap-3 card-hover animate-fade-up"
       style={{ animationDelay: `${delay}s` }}
     >
-      <div className="w-10 h-10 rounded-xl bg-[#0057FF]/10 flex items-center justify-center shrink-0">
+      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-xs text-[#6B6B80]">{label}</p>
-        <p className="text-sm font-medium text-white truncate">{value}</p>
+        <p className="text-xs text-gray-500">{label}</p>
+        <p className="text-sm font-medium text-gray-900 truncate">{value}</p>
       </div>
     </div>
   );
@@ -137,8 +137,8 @@ export default function ProfilePage() {
     return (
       <div className="flex-1 flex items-center justify-center min-h-[60vh] px-6">
         <div className="text-center">
-          <AlertOctagon className="w-12 h-12 text-red-400 mx-auto mb-3" />
-          <p className="text-red-400 text-sm">{error}</p>
+          <AlertOctagon className="w-12 h-12 text-red-600 mx-auto mb-3" />
+          <p className="text-red-600 text-sm">{error}</p>
         </div>
       </div>
     );
@@ -154,9 +154,9 @@ export default function ProfilePage() {
       <div className="flex flex-col items-center text-center animate-fade-up">
         <div className="relative mb-4">
           <div
-            className="w-24 h-24 rounded-full flex items-center justify-center text-2xl font-bold text-white"
+            className="w-24 h-24 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-lg shadow-blue-500/20"
             style={{
-              background: "linear-gradient(135deg, #0057FF 0%, #00E5FF 100%)",
+              background: "linear-gradient(135deg, #0057FF 0%, #3B82F6 100%)",
             }}
           >
             {profile.image ? (
@@ -169,13 +169,13 @@ export default function ProfilePage() {
               getInitials(profile.name)
             )}
           </div>
-          <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#12121A] border-2 border-[#0057FF] flex items-center justify-center">
+          <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white border-2 border-[#0057FF] flex items-center justify-center shadow-sm">
             <User className="w-3.5 h-3.5 text-[#0057FF]" />
           </div>
         </div>
-        <h1 className="text-xl font-bold text-white">{profile.name}</h1>
-        <p className="text-sm text-[#6B6B80] mt-0.5">{profile.email}</p>
-        <span className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0057FF]/15 text-[#0057FF] text-xs font-semibold">
+        <h1 className="text-xl font-bold text-gray-900">{profile.name}</h1>
+        <p className="text-sm text-gray-500 mt-0.5">{profile.email}</p>
+        <span className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-[#0057FF] text-xs font-semibold border border-blue-100">
           <Shield className="w-3 h-3" />
           {profile.role.charAt(0).toUpperCase() + profile.role.slice(1)}
         </span>
@@ -217,42 +217,42 @@ export default function ProfilePage() {
 
       {/* Subscription Card */}
       <div className="animate-fade-up delay-4">
-        <h2 className="text-base font-semibold text-white mb-3 flex items-center gap-2">
-          <CreditCard className="w-4 h-4 text-[#6B6B80]" />
+        <h2 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <CreditCard className="w-4 h-4 text-gray-400" />
           Subscription
         </h2>
         {subscription ? (
           <div
-            className={`glass rounded-2xl p-4 border ${
+            className={`glass rounded-2xl p-4 border-l-4 ${
               subscription.status === "active"
-                ? "border-emerald-500/30 shadow-[0_0_20px_rgba(2,203,0,0.1)]"
+                ? "border-l-emerald-500"
                 : subscription.status === "expired"
-                ? "border-red-500/30"
-                : "border-amber-500/30"
+                ? "border-l-red-500"
+                : "border-l-amber-500"
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-semibold text-white">
+              <p className="text-sm font-semibold text-gray-900">
                 {subscription.planName}
               </p>
               <span
-                className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                   subscription.status === "active"
-                    ? "bg-emerald-500/15 text-emerald-400"
+                    ? "bg-emerald-50 text-emerald-600 border-emerald-200"
                     : subscription.status === "expired"
-                    ? "bg-red-500/15 text-red-400"
-                    : "bg-amber-500/15 text-amber-400"
+                    ? "bg-red-50 text-red-600 border-red-200"
+                    : "bg-amber-50 text-amber-600 border-amber-200"
                 }`}
               >
                 {subscription.status.charAt(0).toUpperCase() +
                   subscription.status.slice(1)}
               </span>
             </div>
-            <p className="text-xs text-[#6B6B80]">
+            <p className="text-xs text-gray-500">
               {formatDate(subscription.startDate)} -{" "}
               {formatDate(subscription.endDate)}
             </p>
-            <p className="text-lg font-bold text-gradient-blue mt-2">
+            <p className="text-lg font-bold text-[#0057FF] mt-2">
               {new Intl.NumberFormat("en-IN", {
                 style: "currency",
                 currency: "INR",
@@ -262,24 +262,19 @@ export default function ProfilePage() {
           </div>
         ) : (
           <div className="glass rounded-2xl p-6 text-center">
-            <CreditCard className="w-8 h-8 text-[#6B6B80] mx-auto mb-2" />
-            <p className="text-sm text-[#6B6B80]">No active subscription</p>
+            <CreditCard className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+            <p className="text-sm text-gray-500">No active subscription</p>
           </div>
         )}
       </div>
 
       {/* Settings */}
       <div className="animate-fade-up delay-5">
-        <h2 className="text-base font-semibold text-white mb-3">Settings</h2>
+        <h2 className="text-base font-semibold text-gray-900 mb-3">Settings</h2>
         <button
           onClick={handleSignOut}
           disabled={signingOut}
-          className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-white transition-all"
-          style={{
-            background: signingOut
-              ? "rgba(255,59,92,0.3)"
-              : "linear-gradient(135deg, #FF3B5C 0%, #FF1744 100%)",
-          }}
+          className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition-all bg-white border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-60"
         >
           {signingOut ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -292,7 +287,7 @@ export default function ProfilePage() {
 
       {/* App Info */}
       <div className="text-center animate-fade-up delay-6 pt-2">
-        <p className="text-xs text-[#6B6B80]/50">PartApp v1.0</p>
+        <p className="text-xs text-gray-400">LuxiFit v1.0</p>
       </div>
     </div>
   );

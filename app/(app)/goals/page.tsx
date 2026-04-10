@@ -44,37 +44,37 @@ const GOAL_TYPE_CONFIG: Record<
   fat_loss: {
     label: "Fat Loss",
     icon: Flame,
-    color: "text-red-400",
-    bg: "bg-red-500/10",
-    border: "border-red-500/20",
+    color: "text-red-600",
+    bg: "bg-red-50",
+    border: "border-red-200",
   },
   muscle_gain: {
     label: "Muscle Gain",
     icon: Dumbbell,
     color: "text-[#0057FF]",
-    bg: "bg-[#0057FF]/10",
-    border: "border-[#0057FF]/20",
+    bg: "bg-blue-50",
+    border: "border-blue-200",
   },
   strength: {
     label: "Strength",
     icon: Zap,
-    color: "text-purple-400",
-    bg: "bg-purple-500/10",
-    border: "border-purple-500/20",
+    color: "text-purple-600",
+    bg: "bg-purple-50",
+    border: "border-purple-200",
   },
   endurance: {
     label: "Endurance",
     icon: Timer,
     color: "text-[#02CB00]",
-    bg: "bg-[#02CB00]/10",
-    border: "border-[#02CB00]/20",
+    bg: "bg-green-50",
+    border: "border-green-200",
   },
   general: {
     label: "General",
     icon: Target,
-    color: "text-gray-400",
-    bg: "bg-gray-500/10",
-    border: "border-gray-500/20",
+    color: "text-gray-600",
+    bg: "bg-gray-100",
+    border: "border-gray-200",
   },
 };
 
@@ -85,16 +85,16 @@ const STATUS_CONFIG: Record<
   active: {
     label: "Active",
     className:
-      "bg-[#02CB00]/15 text-[#02CB00] border border-[#02CB00]/30 shadow-[0_0_12px_rgba(2,203,0,0.25)]",
+      "bg-green-50 text-[#02CB00] border border-green-200",
   },
   achieved: {
     label: "Achieved",
     className:
-      "bg-amber-500/15 text-amber-400 border border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.25)]",
+      "bg-amber-50 text-amber-600 border border-amber-200",
   },
   abandoned: {
     label: "Abandoned",
-    className: "bg-gray-500/15 text-gray-400 border border-gray-500/30",
+    className: "bg-gray-100 text-gray-500 border border-gray-200",
   },
 };
 
@@ -184,20 +184,20 @@ export default function GoalsPage() {
         className="flex items-center gap-2 mb-5 animate-fade-up"
         style={{ animationFillMode: "both" }}
       >
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#02CB00]/10 border border-[#02CB00]/20">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 border border-green-200">
           <span className="size-2 rounded-full bg-[#02CB00] animate-pulse" />
           <span className="text-xs font-medium text-[#02CB00]">
             {activeCount} Active
           </span>
         </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
-          <Trophy className="size-3 text-amber-400" />
-          <span className="text-xs font-medium text-amber-400">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200">
+          <Trophy className="size-3 text-amber-600" />
+          <span className="text-xs font-medium text-amber-600">
             {achievedCount} Achieved
           </span>
         </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 ml-auto">
-          <span className="text-xs font-medium text-muted-foreground">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 border border-gray-200 ml-auto">
+          <span className="text-xs font-medium text-gray-500">
             {goals.length} Total
           </span>
         </div>
@@ -216,7 +216,7 @@ export default function GoalsPage() {
             className={`flex-1 h-11 rounded-xl text-sm font-medium transition-all cursor-pointer ${
               filter === tab.key
                 ? "btn-electric text-white"
-                : "glass text-muted-foreground hover:text-foreground"
+                : "glass text-gray-500 hover:text-gray-900"
             }`}
           >
             {tab.label}
@@ -248,7 +248,7 @@ export default function GoalsPage() {
                 ? "No Active Goals"
                 : "No Achievements Yet"}
           </h3>
-          <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+          <p className="text-sm text-gray-500 max-w-xs mx-auto">
             {filter === "all"
               ? "Goals turn dreams into deadlines. Add one and start crushing it."
               : filter === "active"
@@ -299,11 +299,11 @@ export default function GoalsPage() {
                       </span>
                     </div>
 
-                    <p className="text-sm font-medium text-foreground leading-relaxed mb-2">
+                    <p className="text-sm font-medium text-gray-900 leading-relaxed mb-2">
                       {goal.target}
                     </p>
 
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-gray-500">
                       Created {fmtDate(goal.createdAt)}
                     </p>
                   </div>
@@ -339,7 +339,7 @@ export default function GoalsPage() {
           <div className="space-y-5 mt-2">
             {/* Type selector */}
             <div>
-              <Label className="text-xs text-muted-foreground mb-3 block">
+              <Label className="text-xs text-gray-500 mb-3 block">
                 Goal Type
               </Label>
               <div className="grid grid-cols-5 gap-2">
@@ -354,21 +354,16 @@ export default function GoalsPage() {
                         onClick={() => setSelectedType(type)}
                         className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all min-h-[72px] cursor-pointer ${
                           isSelected
-                            ? `${cfg.bg} ${cfg.border} border-2 ring-2 ring-offset-1 ring-offset-[#0A0A0F]`
-                            : "glass hover:bg-white/5"
+                            ? `${cfg.bg} ${cfg.border} border-2`
+                            : "bg-gray-50 border border-gray-200 hover:bg-gray-100"
                         }`}
-                        style={
-                          isSelected
-                            ? { ["--tw-ring-color" as string]: cfg.color.replace("text-", "") }
-                            : undefined
-                        }
                       >
                         <Icon
-                          className={`size-5 ${isSelected ? cfg.color : "text-muted-foreground"}`}
+                          className={`size-5 ${isSelected ? cfg.color : "text-gray-500"}`}
                         />
                         <span
                           className={`text-[9px] font-medium leading-tight text-center ${
-                            isSelected ? cfg.color : "text-muted-foreground"
+                            isSelected ? cfg.color : "text-gray-500"
                           }`}
                         >
                           {cfg.label}
@@ -382,7 +377,7 @@ export default function GoalsPage() {
 
             {/* Target */}
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Target</Label>
+              <Label className="text-xs text-gray-500">Target</Label>
               <Input
                 placeholder="e.g. Lose 5kg by summer"
                 className="h-12"

@@ -54,39 +54,68 @@
   --color-neon: #00E5FF;
 }
 
-/* ─── Dumble Dark Fitness Theme ─── */
+/* ─── LuxiFit Light Fitness Theme ─── */
 :root {
-  --background: #0A0A0F;
-  --foreground: #F0F0F5;
-  --card: #12121A;
-  --card-foreground: #F0F0F5;
-  --popover: #16161F;
-  --popover-foreground: #F0F0F5;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0F172A;
   --primary: #0057FF;
   --primary-foreground: #FFFFFF;
-  --secondary: #1A1A2E;
-  --secondary-foreground: #E0E0EA;
-  --muted: #1A1A2E;
-  --muted-foreground: #6B6B80;
-  --accent: #1E1E35;
-  --accent-foreground: #E0E0EA;
-  --destructive: #FF3B5C;
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.08);
+  --secondary: #F1F5F9;
+  --secondary-foreground: #0F172A;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent: #EFF6FF;
+  --accent-foreground: #0057FF;
+  --destructive: #EF4444;
+  --border: #E2E8F0;
+  --input: #E2E8F0;
   --ring: #0057FF;
   --chart-1: #0057FF;
-  --chart-2: #00E5FF;
+  --chart-2: #00B7D6;
   --chart-3: #02CB00;
   --chart-4: #F97C00;
-  --chart-5: #FF3B5C;
+  --chart-5: #EF4444;
   --radius: 0.5rem;
-  --sidebar: #0D0D14;
-  --sidebar-foreground: #C0C0D0;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #334155;
   --sidebar-primary: #0057FF;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: rgba(0, 87, 255, 0.1);
+  --sidebar-accent: #EFF6FF;
+  --sidebar-accent-foreground: #0057FF;
+  --sidebar-border: #E2E8F0;
+  --sidebar-ring: #0057FF;
+}
+
+.dark {
+  --background: #1E293B;
+  --foreground: #CBD5E1;
+  --card: #334155;
+  --card-foreground: #CBD5E1;
+  --popover: #334155;
+  --popover-foreground: #CBD5E1;
+  --primary: #0057FF;
+  --primary-foreground: #FFFFFF;
+  --secondary: #475569;
+  --secondary-foreground: #CBD5E1;
+  --muted: #475569;
+  --muted-foreground: #94A3B8;
+  --accent: #1E3A8A;
+  --accent-foreground: #CBD5E1;
+  --destructive: #F87171;
+  --border: rgba(203, 213, 225, 0.12);
+  --input: rgba(203, 213, 225, 0.12);
+  --ring: #0057FF;
+  --sidebar: #1E293B;
+  --sidebar-foreground: #CBD5E1;
+  --sidebar-primary: #0057FF;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: rgba(0, 87, 255, 0.15);
   --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --sidebar-border: rgba(203, 213, 225, 0.08);
   --sidebar-ring: #0057FF;
 }
 
@@ -109,11 +138,17 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(15, 23, 42, 0.12);
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(15, 23, 42, 0.24);
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(203, 213, 225, 0.15);
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(203, 213, 225, 0.25);
   }
 }
 
@@ -211,15 +246,25 @@
 
 /* ─── Utility Classes ─── */
 .glass {
-  background: rgba(18, 18, 26, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.dark .glass {
+  background: #334155;
+  border: 1px solid rgba(203, 213, 225, 0.08);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .glass-light {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+}
+
+.dark .glass-light {
+  background: rgba(203, 213, 225, 0.04);
+  border: 1px solid rgba(203, 213, 225, 0.08);
 }
 
 .glow-blue {
@@ -231,7 +276,7 @@
 }
 
 .text-gradient-blue {
-  background: linear-gradient(135deg, #0057FF, #00E5FF);
+  background: linear-gradient(135deg, #0057FF, #3B82F6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -266,24 +311,29 @@
 
 /* Card hover effect */
 .card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 87, 255, 0.15), 0 4px 12px rgba(0, 0, 0, 0.3);
-  border-color: rgba(0, 87, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08), 0 4px 10px rgba(0, 87, 255, 0.08);
+  border-color: rgba(0, 87, 255, 0.25);
+}
+.dark .card-hover:hover {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 4px 10px rgba(0, 87, 255, 0.15);
+  border-color: rgba(0, 87, 255, 0.3);
 }
 
 /* Button electric */
 .btn-electric {
   background: linear-gradient(135deg, #0057FF, #1469FF);
   color: white;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 87, 255, 0.15);
 }
 .btn-electric:hover {
-  box-shadow: 0 4px 20px rgba(0, 87, 255, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 87, 255, 0.28);
   transform: translateY(-1px);
 }
 .btn-electric::after {

@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const publicPaths = ["/login", "/signup", "/api/auth"];
+const publicPaths = [
+  "/login",
+  "/signup",
+  "/api/auth",
+  "/api/public",
+];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -16,8 +21,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for session cookie
-  const sessionCookie = request.cookies.get("better-auth.session_token");
+  // Check for session cookie (prefix set via advanced.cookiePrefix in auth config)
+  const sessionCookie =
+    request.cookies.get("luxifit-client.session_token") ??
+    request.cookies.get("better-auth.session_token");
   if (!sessionCookie?.value) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
