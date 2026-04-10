@@ -21,9 +21,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for session cookie (prefix set via advanced.cookiePrefix in auth config)
+  // Check for session cookie. Better Auth prefixes cookies with "__Secure-"
+  // on HTTPS; check both forms plus the legacy fallback.
   const sessionCookie =
+    request.cookies.get("__Secure-luxifit-client.session_token") ??
     request.cookies.get("luxifit-client.session_token") ??
+    request.cookies.get("__Secure-better-auth.session_token") ??
     request.cookies.get("better-auth.session_token");
   if (!sessionCookie?.value) {
     return NextResponse.redirect(new URL("/login", request.url));

@@ -39,6 +39,7 @@ function LoginPageInner() {
           return;
         }
         setBranches(data.branches || []);
+        setError(""); // clear any stale initial error once branches load
       } catch (err) {
         if (cancelled) return;
         setError((err as Error).message || "Failed to load branches");
