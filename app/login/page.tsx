@@ -6,6 +6,7 @@ import { Dumbbell, Mail, Lock, Loader2, MapPin } from "lucide-react";
 import { signIn, signOut } from "@/lib/auth/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PublicBranch {
   id: string;
@@ -221,8 +222,21 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-dvh flex items-center justify-center bg-gray-50">
-          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+        <div className="min-h-dvh bg-gray-50 px-6 py-12 flex items-center justify-center">
+          <div className="w-full max-w-100 space-y-6 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-col items-center gap-4 text-center">
+              <Skeleton className="size-16 rounded-2xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-32 mx-auto" />
+                <Skeleton className="h-4 w-48 mx-auto" />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <Skeleton className="h-11 w-full rounded-xl" />
+              <Skeleton className="h-11 w-full rounded-xl" />
+              <Skeleton className="h-11 w-full rounded-xl" />
+            </div>
+          </div>
         </div>
       }
     >
