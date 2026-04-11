@@ -28,18 +28,26 @@ function LoginPageInner() {
 
   useEffect(() => {
     let cancelled = false;
+
     async function loadBranches() {
       try {
-        const res = await fetch("/api/public/branches");
+        const res = await fetch("/api/public/branches", {
+          cache: "no-store",
+        });
         const data = await res.json();
+
         if (cancelled) return;
+
         if (!res.ok) {
           setError(data?.error || "Failed to load branches");
           setBranches([]);
           return;
         }
+
         setBranches(data.branches || []);
-        setError(""); // clear any stale initial error once branches load
+        if (!initialError) {
+          setError("");
+        }
       } catch (err) {
         if (cancelled) return;
         setError((err as Error).message || "Failed to load branches");
@@ -48,11 +56,13 @@ function LoginPageInner() {
         if (!cancelled) setBranchesLoading(false);
       }
     }
+
     loadBranches();
+
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialError]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -73,7 +83,6 @@ function LoginPageInner() {
         return;
       }
 
-      // Verify branch match client-side: fetch /api/me and compare branchId
       const meRes = await fetch("/api/me");
       if (!meRes.ok) {
         await signOut();
@@ -81,15 +90,14 @@ function LoginPageInner() {
         setLoading(false);
         return;
       }
+
       const me = await meRes.json();
       const userBranchId: string | null = me?.profile?.branchId ?? null;
       const userRole: string | null = me?.profile?.role ?? null;
 
       if (userRole && userRole !== "client") {
         await signOut();
-        setError(
-          "This app is for gym members only. Staff should use the admin portal."
-        );
+        setError("This app is for gym members only. Staff should use the admin portal.");
         setLoading(false);
         return;
       }
@@ -103,28 +111,22 @@ function LoginPageInner() {
 
       router.push("/");
     } catch (err) {
-      setError(
-        (err as Error)?.message || "Something went wrong. Please try again."
-      );
+      setError((err as Error)?.message || "Something went wrong. Please try again.");
       setLoading(false);
     }
   }
 
   return (
     <div className="min-h-dvh flex items-center justify-center px-6 py-12 bg-gray-50">
-      <div className="w-full max-w-[400px] animate-fade-up">
-        {/* Branding */}
+      <div className="w-full max-w-100 animate-fade-up">
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 mb-5">
-            <Dumbbell className="w-8 h-8 text-[#0057FF]" />
+            <Dumbbell className="w-8 h-8 text-electric" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">LuxiFit</h1>
-          <p className="text-gray-500 text-sm">
-            Your fitness journey starts here
-          </p>
+          <p className="text-gray-500 text-sm">Your fitness journey starts here</p>
         </div>
 
-        {/* Branch select */}
         <div className="space-y-2 mb-5">
           <Label htmlFor="branch" className="text-sm text-gray-700">
             Select your branch
@@ -136,11 +138,9 @@ function LoginPageInner() {
               value={branchId}
               onChange={(e) => setBranchId(e.target.value)}
               disabled={branchesLoading}
-              className="h-11 w-full pl-10 pr-3 bg-white border border-gray-200 text-gray-900 rounded-xl appearance-none text-sm focus:outline-none focus:ring-2 focus:ring-[#0057FF]/20 disabled:opacity-60"
+              className="h-11 w-full pl-10 pr-3 bg-white border border-gray-200 text-gray-900 rounded-xl appearance-none text-sm focus:outline-none focus:ring-2 focus:ring-electric/20 disabled:opacity-60"
             >
-              <option value="">
-                {branchesLoading ? "Loading branches..." : "Choose a branch"}
-              </option>
+              <option value="">{branchesLoading ? "Loading branches..." : "Choose a branch"}</option>
               {(branches ?? []).map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
@@ -151,7 +151,6 @@ function LoginPageInner() {
           </div>
         </div>
 
-        {/* Form — only shown once branch is selected */}
         {branchId ? (
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
@@ -201,20 +200,14 @@ function LoginPageInner() {
               disabled={loading}
               className="btn-electric w-full h-11 rounded-xl font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-              ) : (
-                "Sign In"
-              )}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Sign In"}
             </button>
           </form>
-        ) : (
-          error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-              {error}
-            </p>
-          )
-        )}
+        ) : error ? (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            {error}
+          </p>
+        ) : null}
 
         <p className="text-center text-xs text-gray-400 mt-8">
           New members must be added by a gym coach or manager.
@@ -237,3 +230,4 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+

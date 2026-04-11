@@ -10,6 +10,11 @@ import { and, desc, eq, gt, inArray, ne, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { logger } from "@/lib/logger";
 
+function getPgErrorCode(err: unknown): string | undefined {
+  const value = err as { cause?: { code?: string } };
+  return value.cause?.code;
+}
+
 export async function GET() {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
@@ -109,8 +114,17 @@ export async function GET() {
     logger.info("Chat rooms listed", { userId, count: result.length });
     return Response.json({ rooms: result });
   } catch (err) {
+    const pgCode = getPgErrorCode(err);
+    if (pgCode === "42P01" || pgCode === "42703") {
+      logger.warn("Chat feature unavailable until DB schema is synced", {
+        pgCode,
+      });
+      return Response.json({ rooms: [], degraded: true });
+    }
+
     logger.error("Failed to list chat rooms", {
       error: (err as Error).message,
+      pgCode,
     });
     return Response.json({ error: "Failed to load rooms" }, { status: 500 });
   }

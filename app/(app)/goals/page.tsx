@@ -33,6 +33,7 @@ interface Goal {
   type: GoalType;
   target: string;
   status: GoalStatus;
+  deadline: string | null;
   createdAt: string;
 }
 
@@ -93,7 +94,7 @@ const STATUS_CONFIG: Record<
       "bg-amber-50 text-amber-600 border border-amber-200",
   },
   abandoned: {
-    label: "Abandoned",
+    label: "Archived",
     className: "bg-gray-100 text-gray-500 border border-gray-200",
   },
 };
@@ -120,6 +121,7 @@ export default function GoalsPage() {
   // form
   const [selectedType, setSelectedType] = useState<GoalType | null>(null);
   const [targetText, setTargetText] = useState("");
+  const [deadline, setDeadline] = useState("");
 
   const fetchGoals = useCallback(async () => {
     try {
@@ -146,11 +148,16 @@ export default function GoalsPage() {
       const res = await fetch("/api/me/goals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: selectedType, target: targetText.trim() }),
+        body: JSON.stringify({
+          type: selectedType,
+          target: targetText.trim(),
+          deadline: deadline || null,
+        }),
       });
       if (res.ok) {
         setSelectedType(null);
         setTargetText("");
+        setDeadline("");
         setDialogOpen(false);
         fetchGoals();
       }
@@ -160,6 +167,32 @@ export default function GoalsPage() {
       setSubmitting(false);
     }
   };
+
+  const handleArchiveToggle = async (goalId: string, status: GoalStatus) => {
+    const action = status === "active" ? "archive" : "activate";
+    try {
+      const res = await fetch("/api/me/goals", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: goalId, action }),
+      });
+      if (res.ok) {
+        await fetchGoals();
+      }
+    } catch {
+      // silently fail
+    }
+  };
+
+  function deadlineText(goalDeadline: string | null) {
+    if (!goalDeadline) return null;
+    const now = new Date();
+    const end = new Date(goalDeadline);
+    const daysLeft = Math.ceil((end.getTime() - now.getTime()) / 86_400_000);
+    if (daysLeft < 0) return `${Math.abs(daysLeft)}d overdue`;
+    if (daysLeft === 0) return "Due today";
+    return `${daysLeft}d left`;
+  }
 
   // ── Derived ────────────────────────────────────────────
   const activeCount = goals.filter((g) => g.status === "active").length;
@@ -303,9 +336,29 @@ export default function GoalsPage() {
                       {goal.target}
                     </p>
 
-                    <p className="text-xs text-gray-500">
-                      Created {fmtDate(goal.createdAt)}
-                    </p>
+                    {goal.deadline && (
+                      <p className="text-xs text-gray-600 mb-2">
+                        Deadline {fmtDate(goal.deadline)}
+                        <span className="ml-2 text-[#0057FF] font-medium">
+                          ({deadlineText(goal.deadline)})
+                        </span>
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs text-gray-500">
+                        Created {fmtDate(goal.createdAt)}
+                      </p>
+                      {(goal.status === "active" || goal.status === "abandoned") && (
+                        <button
+                          type="button"
+                          onClick={() => handleArchiveToggle(goal.id, goal.status)}
+                          className="text-xs font-medium text-[#0057FF] hover:underline"
+                        >
+                          {goal.status === "active" ? "Archive" : "Restore"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -383,6 +436,16 @@ export default function GoalsPage() {
                 className="h-12"
                 value={targetText}
                 onChange={(e) => setTargetText(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs text-gray-500">Deadline</Label>
+              <Input
+                type="date"
+                className="h-12"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
               />
             </div>
 

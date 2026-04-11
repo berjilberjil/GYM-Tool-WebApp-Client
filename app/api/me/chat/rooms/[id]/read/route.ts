@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { chatParticipant } from "@/lib/db/schema";
-import { and, eq } from "drizzle-orm";
+import { chatMessage, chatParticipant } from "@/lib/db/schema";
+import { and, desc, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { logger } from "@/lib/logger";
 
@@ -36,9 +36,18 @@ export async function POST(
       return Response.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const [latestMessage] = await db
+      .select({ createdAt: chatMessage.createdAt })
+      .from(chatMessage)
+      .where(eq(chatMessage.roomId, roomId))
+      .orderBy(desc(chatMessage.createdAt))
+      .limit(1);
+
+    const readAt = latestMessage?.createdAt ?? new Date();
+
     await db
       .update(chatParticipant)
-      .set({ lastReadAt: new Date() })
+      .set({ lastReadAt: readAt })
       .where(
         and(
           eq(chatParticipant.userId, userId),

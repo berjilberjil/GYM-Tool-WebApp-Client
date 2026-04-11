@@ -41,6 +41,12 @@ interface ProgressEntry {
   recordedAt: string;
 }
 
+interface LatestGoal {
+  target: string;
+  deadline: string | null;
+  daysLeft: number | null;
+}
+
 // ── Helpers ────────────────────────────────────────────────
 function fmtDate(iso: string) {
   const d = new Date(iso);
@@ -64,6 +70,7 @@ function fmtRelative(iso: string) {
 // ── Component ──────────────────────────────────────────────
 export default function ProgressPage() {
   const [entries, setEntries] = useState<ProgressEntry[]>([]);
+  const [latestGoal, setLatestGoal] = useState<LatestGoal | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -87,6 +94,12 @@ export default function ProgressPage() {
       if (res.ok) {
         const data = await res.json();
         setEntries(data.entries ?? data);
+      }
+
+      const meRes = await fetch("/api/me");
+      if (meRes.ok) {
+        const me = await meRes.json();
+        setLatestGoal(me.latestGoal ?? null);
       }
     } catch {
       // silently fail
@@ -218,6 +231,37 @@ export default function ProgressPage() {
           </div>
         )}
       </div>
+
+      {/* Goal + deadline snapshot */}
+      {!loading && latestGoal?.target && (
+        <div
+          className="glass rounded-2xl p-5 mb-6 animate-fade-up delay-1"
+          style={{ animationFillMode: "both", opacity: 0 }}
+        >
+          <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">
+            Latest Active Goal
+          </p>
+          <p className="text-sm font-semibold text-gray-900 mb-2">
+            {latestGoal.target}
+          </p>
+          {latestGoal.deadline && (
+            <p className="text-xs text-gray-600">
+              Deadline {fmtDate(latestGoal.deadline)}
+              <span className="ml-2 font-medium text-[#0057FF]">
+                ({
+                  latestGoal.daysLeft === null
+                    ? "-"
+                    : latestGoal.daysLeft < 0
+                      ? `${Math.abs(latestGoal.daysLeft)}d overdue`
+                      : latestGoal.daysLeft === 0
+                        ? "Due today"
+                        : `${latestGoal.daysLeft}d left`
+                })
+              </span>
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Mini Weight Chart */}
       {!loading && weights.length >= 2 && (

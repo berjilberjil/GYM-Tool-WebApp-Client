@@ -223,6 +223,7 @@ export const goal = pgTable("goal", {
   type: goalTypeEnum("type").notNull(),
   target: text("target").notNull(),
   status: goalStatusEnum("status").notNull().default("active"),
+  deadline: date("deadline"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

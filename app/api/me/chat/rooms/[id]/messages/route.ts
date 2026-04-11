@@ -6,7 +6,7 @@ import {
   chatMessage,
   user,
 } from "@/lib/db/schema";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { logger } from "@/lib/logger";
 
@@ -51,6 +51,7 @@ export async function GET(
         roomId: chatMessage.roomId,
         senderId: chatMessage.senderId,
         senderName: user.name,
+        senderRole: user.role,
         senderImage: user.image,
         content: chatMessage.content,
         createdAt: chatMessage.createdAt,
@@ -60,13 +61,36 @@ export async function GET(
       .where(eq(chatMessage.roomId, roomId))
       .orderBy(asc(chatMessage.createdAt));
 
+    // Mark this room read using DB message timestamp to avoid app/server clock drift.
+    const [latestMessage] = await db
+      .select({ createdAt: chatMessage.createdAt })
+      .from(chatMessage)
+      .where(eq(chatMessage.roomId, roomId))
+      .orderBy(desc(chatMessage.createdAt))
+      .limit(1);
+
+    if (latestMessage?.createdAt) {
+      await db
+        .update(chatParticipant)
+        .set({ lastReadAt: latestMessage.createdAt })
+        .where(
+          and(
+            eq(chatParticipant.userId, userId),
+            eq(chatParticipant.roomId, roomId)
+          )
+        );
+    }
+
     // Get participants' lastReadAt to compute read receipts
     const participants = await db
       .select({
         userId: chatParticipant.userId,
+        name: user.name,
+        role: user.role,
         lastReadAt: chatParticipant.lastReadAt,
       })
       .from(chatParticipant)
+      .innerJoin(user, eq(chatParticipant.userId, user.id))
       .where(eq(chatParticipant.roomId, roomId));
 
     logger.info("Chat messages fetched", {

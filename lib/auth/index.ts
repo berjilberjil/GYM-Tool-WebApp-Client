@@ -6,6 +6,7 @@ import * as schema from "@/lib/db/schema";
 import { user } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { logger } from "@/lib/logger";
+import { sendEmail } from "@/lib/email";
 
 export const auth = betterAuth({
   appName: "LuxiFit",
@@ -22,6 +23,34 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     maxPasswordLength: 128,
     autoSignIn: true,
+    sendResetPassword: async ({ user, url }) => {
+      if (!process.env.RESEND_API_KEY) {
+        logger.warn("RESEND_API_KEY missing. Password reset link (dev only)", {
+          userId: user.id,
+          email: user.email,
+          url,
+        });
+        return;
+      }
+
+      await sendEmail({
+        to: user.email,
+        subject: "Reset your LuxiFit password",
+        userId: user.id,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #111827;">
+            <h2 style="margin-bottom: 8px;">Reset your password</h2>
+            <p style="margin-top: 0; color: #374151;">We received a request to reset your LuxiFit account password.</p>
+            <p>
+              <a href="${url}" style="display: inline-block; background: #0057FF; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 999px; font-weight: 600;">
+                Reset Password
+              </a>
+            </p>
+            <p style="color: #6b7280; font-size: 14px;">If you did not request this, you can safely ignore this email.</p>
+          </div>
+        `,
+      });
+    },
   },
 
   socialProviders: {

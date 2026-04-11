@@ -8,6 +8,12 @@ import {
 import { eq, desc } from "drizzle-orm";
 import { headers } from "next/headers";
 
+function isNotExpired(endDate: string): boolean {
+  const end = new Date(endDate);
+  const now = new Date();
+  return end.getTime() >= now.getTime();
+}
+
 export async function GET() {
   try {
     const session = await auth.api.getSession({
@@ -41,7 +47,7 @@ export async function GET() {
       .where(eq(payment.clientId, userId))
       .orderBy(desc(payment.dueDate));
 
-    // Get current active subscription with plan details
+    // Get subscriptions and resolve current one (active + not expired first).
     const subscriptions = await db
       .select({
         id: clientSubscription.id,
@@ -51,14 +57,18 @@ export async function GET() {
         planName: feePlan.name,
         planAmount: feePlan.amount,
         planDurationDays: feePlan.durationDays,
+        createdAt: clientSubscription.createdAt,
       })
       .from(clientSubscription)
       .innerJoin(feePlan, eq(clientSubscription.planId, feePlan.id))
       .where(eq(clientSubscription.clientId, userId))
       .orderBy(desc(clientSubscription.createdAt))
-      .limit(1);
+      .limit(20);
 
-    const subscription = subscriptions[0] ?? null;
+    const activeSubscription = subscriptions.find(
+      (sub) => sub.status === "active" && isNotExpired(sub.endDate)
+    );
+    const subscription = activeSubscription ?? subscriptions[0] ?? null;
 
     // Compute summary stats
     let totalPaid = 0;

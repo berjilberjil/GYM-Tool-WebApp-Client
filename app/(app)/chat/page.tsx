@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 interface Participant {
   userId: string;
   name: string;
+  role?: "owner" | "manager" | "coach" | "client";
   image: string | null;
   lastReadAt?: string | null;
 }
@@ -40,6 +41,7 @@ interface Message {
   roomId: string;
   senderId: string;
   senderName: string;
+  senderRole?: "owner" | "manager" | "coach" | "client";
   senderImage: string | null;
   content: string;
   createdAt: string;
@@ -71,6 +73,21 @@ function formatRelative(iso: string) {
   return d.toLocaleDateString();
 }
 
+function roleLabel(role?: "owner" | "manager" | "coach" | "client") {
+  if (!role) return "Member";
+  if (role === "owner") return "Owner";
+  if (role === "manager") return "Manager";
+  if (role === "coach") return "Coach";
+  return "Client";
+}
+
+function roleBadgeClass(role?: "owner" | "manager" | "coach" | "client") {
+  if (role === "owner") return "bg-violet-50 text-violet-700";
+  if (role === "manager") return "bg-amber-50 text-amber-700";
+  if (role === "coach") return "bg-emerald-50 text-emerald-700";
+  return "bg-gray-100 text-gray-600";
+}
+
 export default function ChatPage() {
   const [rooms, setRooms] = useState<Room[] | null>(null);
   const [roomsLoading, setRoomsLoading] = useState(true);
@@ -80,6 +97,11 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [meId, setMeId] = useState<string | null>(null);
+  const [coachName, setCoachName] = useState<string | null>(null);
+  const [managerName, setManagerName] = useState<string | null>(null);
+  const [creatingDirect, setCreatingDirect] = useState<
+    "coach" | "manager" | null
+  >(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load current user id once
@@ -88,7 +110,11 @@ export default function ChatPage() {
     fetch("/api/me")
       .then((r) => r.json())
       .then((d) => {
-        if (!cancelled) setMeId(d?.user?.id ?? null);
+        if (!cancelled) {
+          setMeId(d?.user?.id ?? null);
+          setCoachName(d?.coachName ?? null);
+          setManagerName(d?.managerName ?? null);
+        }
       })
       .catch(() => {});
     return () => {
@@ -156,12 +182,15 @@ export default function ChatPage() {
   // Poll rooms every 3s when in list view; poll messages every 3s when in room
   useEffect(() => {
     if (activeRoomId) {
-      const t = setInterval(() => loadMessages(activeRoomId), 3_000);
+      const t = setInterval(() => {
+        void loadMessages(activeRoomId);
+        void markRead(activeRoomId);
+      }, 3_000);
       return () => clearInterval(t);
     }
     const t = setInterval(loadRooms, 3_000);
     return () => clearInterval(t);
-  }, [activeRoomId, loadRooms, loadMessages]);
+  }, [activeRoomId, loadRooms, loadMessages, markRead]);
 
   // On room open: load messages, mark read, scroll to bottom
   useEffect(() => {
@@ -208,6 +237,33 @@ export default function ChatPage() {
     }
   }
 
+  async function openDirectChat(kind: "coach" | "manager") {
+    if (creatingDirect) return;
+    setCreatingDirect(kind);
+    try {
+      const res = await fetch("/api/me/chat/direct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        alert(data?.error || "Failed to start chat");
+        return;
+      }
+
+      await loadRooms();
+      if (data?.roomId) {
+        setActiveRoomId(data.roomId);
+      }
+    } catch {
+      alert("Failed to start chat");
+    } finally {
+      setCreatingDirect(null);
+    }
+  }
+
   // Compute read receipt for each sent message: "read" if any other participant's
   // lastReadAt >= message createdAt
   function readStateFor(msg: Message): "sent" | "read" {
@@ -218,6 +274,18 @@ export default function ChatPage() {
       (p) => p.lastReadAt && new Date(p.lastReadAt).getTime() >= msgTime
     );
     return allRead ? "read" : "sent";
+  }
+
+  function seenByFor(msg: Message) {
+    const msgTime = new Date(msg.createdAt).getTime();
+    return participants
+      .filter(
+        (p) =>
+          p.userId !== meId &&
+          p.lastReadAt &&
+          new Date(p.lastReadAt).getTime() >= msgTime
+      )
+      .map((p) => `${p.name} (${roleLabel(p.role)})`);
   }
 
   // Room detail view
@@ -237,7 +305,7 @@ export default function ChatPage() {
             <AvatarImage
               src={activeRoom.participants[0]?.image || undefined}
             />
-            <AvatarFallback className="bg-blue-50 text-xs text-[#0057FF] font-medium">
+            <AvatarFallback className="bg-blue-50 text-xs text-electric font-medium">
               {initialsOf(
                 activeRoom.name || activeRoom.participants[0]?.name
               )}
@@ -277,16 +345,36 @@ export default function ChatPage() {
                   <div
                     className={`max-w-[80%] rounded-2xl px-3.5 py-2 shadow-sm ${
                       mine
-                        ? "bg-[#0057FF] text-white rounded-br-md"
+                        ? "bg-electric text-white rounded-br-md"
                         : "bg-white text-gray-900 rounded-bl-md border border-gray-100"
                     }`}
                   >
                     {!mine && activeRoom.type === "group" && (
-                      <p className="text-[11px] font-semibold text-[#0057FF] mb-0.5">
-                        {m.senderName}
-                      </p>
+                      <div className="mb-0.5 flex items-center gap-1.5">
+                        <p className="text-[11px] font-semibold text-electric">
+                          {m.senderName}
+                        </p>
+                        <span
+                          className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${roleBadgeClass(
+                            m.senderRole
+                          )}`}
+                        >
+                          {roleLabel(m.senderRole)}
+                        </span>
+                      </div>
                     )}
-                    <p className="text-sm whitespace-pre-wrap break-words">
+                    {!mine && activeRoom.type === "direct" && (
+                      <div className="mb-0.5 flex items-center gap-1.5">
+                        <span
+                          className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${roleBadgeClass(
+                            m.senderRole
+                          )}`}
+                        >
+                          {roleLabel(m.senderRole)}
+                        </span>
+                      </div>
+                    )}
+                    <p className="text-sm whitespace-pre-wrap wrap-break-word">
                       {m.content}
                     </p>
                     <div
@@ -302,6 +390,11 @@ export default function ChatPage() {
                           <Check className="w-3.5 h-3.5" />
                         ))}
                     </div>
+                    {mine && seenByFor(m).length > 0 && (
+                      <p className="mt-0.5 text-[10px] text-blue-100 text-right">
+                        Seen by {seenByFor(m).join(", ")}
+                      </p>
+                    )}
                   </div>
                 </div>
               );
@@ -324,7 +417,7 @@ export default function ChatPage() {
           <button
             type="submit"
             disabled={sending || !input.trim()}
-            className="w-10 h-10 rounded-full bg-[#0057FF] text-white flex items-center justify-center disabled:opacity-40"
+            className="w-10 h-10 rounded-full bg-electric text-white flex items-center justify-center disabled:opacity-40"
             aria-label="Send"
           >
             {sending ? (
@@ -366,7 +459,7 @@ export default function ChatPage() {
                   <AvatarImage
                     src={r.participants[0]?.image || undefined}
                   />
-                  <AvatarFallback className="bg-blue-50 text-sm text-[#0057FF] font-medium">
+                  <AvatarFallback className="bg-blue-50 text-sm text-electric font-medium">
                     {initialsOf(title)}
                   </AvatarFallback>
                 </Avatar>
@@ -389,7 +482,7 @@ export default function ChatPage() {
                         : "No messages yet"}
                     </p>
                     {r.unreadCount > 0 && (
-                      <span className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-[#0057FF] text-white text-[10px] font-semibold flex items-center justify-center">
+                      <span className="shrink-0 min-w-5 h-5 px-1.5 rounded-full bg-electric text-white text-[10px] font-semibold flex items-center justify-center">
                         {r.unreadCount}
                       </span>
                     )}
@@ -408,6 +501,32 @@ export default function ChatPage() {
           <p className="text-xs text-gray-500">
             Your coach or gym manager will start a chat with you.
           </p>
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={() => openDirectChat("coach")}
+              disabled={!coachName || creatingDirect !== null}
+              className="inline-flex items-center justify-center rounded-full bg-electric px-4 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {creatingDirect === "coach"
+                ? "Opening coach chat..."
+                : coachName
+                  ? `Chat with ${coachName}`
+                  : "Coach not assigned"}
+            </button>
+            <button
+              type="button"
+              onClick={() => openDirectChat("manager")}
+              disabled={!managerName || creatingDirect !== null}
+              className="inline-flex items-center justify-center rounded-full border border-electric px-4 py-2 text-xs font-semibold text-electric disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {creatingDirect === "manager"
+                ? "Opening manager chat..."
+                : managerName
+                  ? `Chat with ${managerName}`
+                  : "Manager not assigned"}
+            </button>
+          </div>
         </div>
       )}
     </div>

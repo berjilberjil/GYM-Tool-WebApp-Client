@@ -13,7 +13,35 @@ import {
   TrendingUp,
   AlertOctagon,
   Receipt,
+  Loader2,
 } from "lucide-react";
+
+interface RazorpayResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayOptions {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description?: string;
+  order_id: string;
+  handler: (response: RazorpayResponse) => void;
+  theme?: { color?: string };
+}
+
+interface RazorpayInstance {
+  open: () => void;
+}
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: RazorpayOptions) => RazorpayInstance;
+  }
+}
 
 interface Payment {
   id: string;
@@ -196,11 +224,25 @@ export default function PaymentsPage() {
   const [data, setData] = useState<PaymentsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [payingId, setPayingId] = useState<string | null>(null);
+
+  async function loadRazorpayScript() {
+    if (typeof window === "undefined") return false;
+    if (window.Razorpay) return true;
+    return new Promise<boolean>((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  }
 
   useEffect(() => {
     async function fetchPayments() {
       try {
-        const res = await fetch("/api/me/payments");
+        const res = await fetch("/api/me/payments", { cache: "no-store" });
         if (!res.ok) {
           throw new Error("Failed to fetch payments");
         }
@@ -215,10 +257,76 @@ export default function PaymentsPage() {
     fetchPayments();
   }, []);
 
+  async function refreshPayments() {
+    const res = await fetch("/api/me/payments", { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch payments");
+    const json = await res.json();
+    setData(json);
+  }
+
+  async function handlePayNow(p: Payment) {
+    setPayingId(p.id);
+    try {
+      const loaded = await loadRazorpayScript();
+      if (!loaded || !window.Razorpay) {
+        alert("Unable to load payment gateway. Please try again.");
+        return;
+      }
+
+      const orderRes = await fetch("/api/me/payments/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentId: p.id }),
+      });
+
+      const orderData = await orderRes.json().catch(() => ({}));
+      if (!orderRes.ok) {
+        alert(orderData?.error || "Failed to initiate payment");
+        return;
+      }
+
+      const rzp = new window.Razorpay({
+        key: orderData.key,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "LuxiFit",
+        description: `Payment for due ${formatDate(p.dueDate)}`,
+        order_id: orderData.orderId,
+        theme: { color: "#0057FF" },
+        handler: async (response: RazorpayResponse) => {
+          const verifyRes = await fetch("/api/me/payments/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              paymentId: p.id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }),
+          });
+
+          const verifyData = await verifyRes.json().catch(() => ({}));
+          if (!verifyRes.ok) {
+            alert(verifyData?.error || "Payment verification failed");
+            return;
+          }
+
+          await refreshPayments();
+        },
+      });
+
+      rzp.open();
+    } catch {
+      alert("Payment failed to start. Please try again.");
+    } finally {
+      setPayingId(null);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-2 border-[#0057FF] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-electric border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -239,7 +347,7 @@ export default function PaymentsPage() {
   const { payments, subscription, summary } = data;
 
   return (
-    <div className="w-full max-w-[480px] mx-auto px-4 py-6 pb-28 space-y-6">
+    <div className="w-full max-w-120 mx-auto px-4 py-6 pb-28 space-y-6">
       {/* Header */}
       <div className="animate-fade-up">
         <h1 className="text-2xl font-bold text-gray-900">Payments</h1>
@@ -344,6 +452,20 @@ export default function PaymentsPage() {
                       {formatCurrency(p.amount)}
                     </p>
                     <StatusBadge status={p.status} />
+                    {(p.status === "pending" || p.status === "overdue") && (
+                      <button
+                        type="button"
+                        onClick={() => handlePayNow(p)}
+                        disabled={payingId === p.id}
+                        className="mt-1 inline-flex items-center justify-center rounded-full bg-electric px-3 py-1 text-[11px] font-semibold text-white disabled:opacity-50"
+                      >
+                        {payingId === p.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          "Pay Now"
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

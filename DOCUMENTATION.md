@@ -146,7 +146,7 @@ ymg-client/
 │   ├── auth/                   # Better Auth (shared config with admin)
 │   ├── db/                     # Drizzle ORM (shared schema)
 │   └── utils.ts
-├── middleware.ts                # Auth redirect
+├── proxy.ts                     # Auth redirect
 ├── .env.example                 # Template (safe to commit)
 ├── .env.local                   # Your secrets (git-ignored)
 └── package.json

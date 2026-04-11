@@ -11,6 +11,12 @@ import {
 import { eq, and, desc, count } from "drizzle-orm";
 import { headers } from "next/headers";
 
+function isNotExpired(endDate: string): boolean {
+  const end = new Date(endDate);
+  const now = new Date();
+  return end.getTime() >= now.getTime();
+}
+
 export async function GET() {
   try {
     const session = await auth.api.getSession({
@@ -47,6 +53,8 @@ export async function GET() {
 
     // Get coach name
     let coachName: string | null = null;
+    let managerId: string | null = null;
+    let managerName: string | null = null;
     if (profile.coachId) {
       const [coachRow] = await db
         .select({ name: user.name })
@@ -56,7 +64,25 @@ export async function GET() {
       coachName = coachRow?.name ?? null;
     }
 
-    // Get current subscription with plan details
+    if (profile.branchId) {
+      const [managerRow] = await db
+        .select({ managerId: branch.managerId })
+        .from(branch)
+        .where(eq(branch.id, profile.branchId))
+        .limit(1);
+      managerId = managerRow?.managerId ?? null;
+
+      if (managerId) {
+        const [managerUser] = await db
+          .select({ name: user.name })
+          .from(user)
+          .where(eq(user.id, managerId))
+          .limit(1);
+        managerName = managerUser?.name ?? null;
+      }
+    }
+
+    // Get subscriptions and resolve the current one (active + not expired first).
     const subscriptions = await db
       .select({
         id: clientSubscription.id,
@@ -66,14 +92,18 @@ export async function GET() {
         planName: feePlan.name,
         planAmount: feePlan.amount,
         planDurationDays: feePlan.durationDays,
+        createdAt: clientSubscription.createdAt,
       })
       .from(clientSubscription)
       .innerJoin(feePlan, eq(clientSubscription.planId, feePlan.id))
       .where(eq(clientSubscription.clientId, userId))
       .orderBy(desc(clientSubscription.createdAt))
-      .limit(1);
+      .limit(20);
 
-    const currentSubscription = subscriptions[0] ?? null;
+    const activeSubscription = subscriptions.find(
+      (sub) => sub.status === "active" && isNotExpired(sub.endDate)
+    );
+    const currentSubscription = activeSubscription ?? subscriptions[0] ?? null;
 
     // Compute subscription status for dashboard
     let subscriptionData: {
@@ -125,6 +155,32 @@ export async function GET() {
       .orderBy(desc(progressEntry.recordedAt))
       .limit(1);
 
+    const latestGoalArr = await db
+      .select({
+        id: goal.id,
+        target: goal.target,
+        deadline: goal.deadline,
+        status: goal.status,
+        createdAt: goal.createdAt,
+      })
+      .from(goal)
+      .where(and(eq(goal.clientId, userId), eq(goal.status, "active")))
+      .orderBy(desc(goal.createdAt))
+      .limit(1);
+
+    const latestGoal = latestGoalArr[0] ?? null;
+    const latestGoalWithDays = latestGoal
+      ? {
+          ...latestGoal,
+          daysLeft: latestGoal.deadline
+            ? Math.ceil(
+                (new Date(latestGoal.deadline).getTime() - Date.now()) /
+                  (1000 * 60 * 60 * 24)
+              )
+            : null,
+        }
+      : null;
+
     return Response.json({
       // Dashboard fields
       user: {
@@ -139,6 +195,7 @@ export async function GET() {
         activeGoals: goalsCount[0]?.value ?? 0,
       },
       latestProgress: latestProgressArr[0] || null,
+      latestGoal: latestGoalWithDays,
       // Profile fields
       profile: {
         id: profile.id,
@@ -155,6 +212,8 @@ export async function GET() {
       },
       branchName,
       coachName,
+      managerId,
+      managerName,
       rawSubscription: currentSubscription,
     });
   } catch (error) {
